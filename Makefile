@@ -109,6 +109,10 @@ A25:
 	 dmesg -w
 
 A26:
-	@A18="We show Help instructions"; echo "$$A18"; read -p "Press Enter to return..."; $(MAKE) all
+	@read -p "What do you want help with? " msg; \
+	git add .; \
+	git commit -m "$$msg"; \
+	git push -u origin master
+
 
 .PHONY: all A22 A23 A24 A25 A26
