@@ -12,7 +12,7 @@ static void DefaultRegister(u8*Name,void*Library){
     INIT_LIST_HEAD(&this->List);
     list_add(&this->List,&Contents);
 }
-static void RemoveAll(void){
+Void RemoveAll(void){
     struct Content*this,*temporary;
     list_for_each_entry_safe(this,temporary,&Contents,List){
         list_del(&this->List);
@@ -20,16 +20,19 @@ static void RemoveAll(void){
     }
 }
 static void DefaultInit(void){
+
+   
     if(Main.Default.Status)return;
     Main.Default.Status=true;
     GetBootstrapInterface()->BI.BO();
 }
-static bool ExitEvent=false;
+Static bool ExitEvent=false;
 static void DefaultExit(void){
+
     if(!Main.Default.Status||ExitEvent)return;
     ExitEvent=true;
-    GetBootstrapInterface()->BI.BC(); 
     Main.Default.Status=false;
+    GetBootstrapInterface()->BI.BC();
     RemoveAll();
 }
 static void*DefaultGet(u8*name){

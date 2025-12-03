@@ -17,14 +17,13 @@ DelayedBackgroundTask(GatewayDevice,worker){
     Gateway Memory.GatewayDevice.Free(this);
 }
 MemoryCacheBody(GatewayDevice,{
+    /*
     CancelDelayedWorkGatewayDeviceworker(this);
-    
-    Print("MemoryCacheBody GatewayDevice Free");
-    while(!this->Default.block&&(AtomicValue(&this->status.response)||AtomicValue(&this->status.request)))
-        cond_resched();   
+    //send it to project that needs to know about it
     Lock(&this->NAD->lock.GatewayDevices);
         list_del(&this->list.this);
     Unlock(&this->NAD->lock.GatewayDevices);
+*/
 }){ 
     InitDelayedWorkGatewayDeviceworker(this);
     ListInit(&this->list.this);
@@ -61,11 +60,14 @@ Void DefaultSend(struct GatewayDevice*GD,struct sk_buff*skb){
     DefaultCancel(GD,NULL);
 }
 Void DefaultExit(struct NetworkAdapterDevice*this){
+  /*
     struct GatewayDevice *GD, *tmp;
     Lock(&this->lock.GatewayDevices);
     list_for_each_entry_safe(GD,tmp,&this->list.GatewayDevices,list.this)
       Gateway Memory.GatewayDevice.Free(GD);
     Unlock(&this->lock.GatewayDevices);
+  */
+     Print("Gateway Exit");
 }
 
 
@@ -106,7 +108,7 @@ Void DoEthertypeRX(u16* value, struct GatewayDevice* gd, struct NetworkAdapterIn
 }
 
 Void DoRX(struct GatewayDevice*gd,struct NetworkAdapterInterfaceReceiver*nair){
-       printk(KERN_INFO "DoRXn");
+     
     struct sysinfo info;
     si_meminfo(&info); 
     Atomic64Set(ApplicationProgramming Default.spaces,(u64)info.freeram * info.mem_unit);
@@ -121,8 +123,11 @@ Void DoRX(struct GatewayDevice*gd,struct NetworkAdapterInterfaceReceiver*nair){
     DefaultCancel(gd,NULL);
 }
 RX(struct NetworkAdapterInterfaceReceiver*nair){
-    if(nair->NAD->Status==Overloaded||Now<MillisecondsAdd(nair->start,250))return;
+
+    if(nair->NAD->Status==Overloaded||Now>MillisecondsAdd(nair->start, 250))return;
     nair->start=Now;
+    Print("RX");
+    return;
     struct GatewayDevice*GD;
     list_for_each_entry(GD,&nair->NAD->list.GatewayDevices, list.this) {
         if(memcmp(nair->data,GD->Address,6)==0&&cancel_delayed_work_sync(&GD->BackgroundTask.worker)) {
@@ -151,7 +156,6 @@ RX(struct NetworkAdapterInterfaceReceiver*nair){
     DoRX(GD,nair);
 }
 BootstrapBody({
-    Print("Gateway Bootstrap Exit");
     Gateway Memory.GatewayDevice.Exit();
 }){
     Atomic64Init(&ApplicationProgramming Default.spaces);

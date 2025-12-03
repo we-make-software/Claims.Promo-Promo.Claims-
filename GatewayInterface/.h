@@ -48,7 +48,7 @@
     };
     
     #define GatewayOverFlowControl\
-        if(gd->NAD->Status==Overloaded||Now<MillisecondsAdd(nair->start,100)||gd->Default.block){\
+        if(gd->NAD->Status==Overloaded||Now>MillisecondsAdd(nair->start,100)||gd->Default.block){\
             Gateway Default.Cancel(gd,NULL);\
             return;\
         }\
@@ -77,8 +77,8 @@
     #define IEEE802_3TXSend\
         Gateway Default.Send(gd->NAD,skb)
     
-    #define IEEE802_3TXCancel\
-        Gateway Default.Cancel(gd->NAD,skb)
+    #define TXCancel\
+        Gateway Default.Cancel(gd,skb)
     
     #define GatewayDeviceExpiry(m)\
         Atomic64AddMinutes(&gd->status.expiry,m);

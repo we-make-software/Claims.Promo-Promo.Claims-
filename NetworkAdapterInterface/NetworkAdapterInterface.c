@@ -1,7 +1,11 @@
 #include "../.h"
 WorkBackgroundTask(NetworkAdapterInterfaceReceiver,worker){
+    if(this->NAD->Status==Overloaded||Now>MillisecondsAdd(this->start, 250))goto Cancel;
+    this->start=Now;
     this->data+=6;
-    RXCall(Gateway)(this);
+    Print("NetworkAdapterInterfaceReceiver RX");
+    // RXCall(Gateway)(this);
+    Cancel:
     NetworkAdapter Memory.NAIR.Free(this);
 }
 MemoryCacheBody(NetworkAdapterInterfaceReceiver,{
@@ -55,7 +59,7 @@ static int NAIPF(struct sk_buff*skb,struct net_device*,struct packet_type*pt,str
     NAIR->NAD=NAD;
     NAIR->skb=skb_get(skb);
     NAIR->data=skb_mac_header(skb);
-    NAIR->start=ktime_get();
+    NAIR->start=Now;
     queue_work(system_highpri_wq,&NAIR->BackgroundTask.worker);
     return NET_RX_DROP;
 }
@@ -72,6 +76,7 @@ BootstrapBody({
     struct NetworkAdapterDevice*NAD,*tmp_NAD;
     list_for_each_entry(NAD,&NetworkAdapter Default.this, list.this)
         Gateway Default.Exit(NAD);
+        
     NAD=NULL;   
     list_for_each_entry(NAD,&NetworkAdapter Default.this, list.this)
         dev_remove_pack(&NAD->packet);
@@ -90,7 +95,7 @@ BootstrapBody({
         if((n->flags&IFF_LOOPBACK)||Exists(n))continue;
         struct NetworkAdapterDevice*NAD=NetworkAdapter Memory.NAD.Create();
         list_add(&NAD->list.this, &NetworkAdapter Default.this);
-        NAD->packet= (struct packet_type){
+        NAD->packet=(struct packet_type){
             .dev=n,
             .type=htons(ETH_P_ALL),
             .func=NAIPF
@@ -100,9 +105,9 @@ BootstrapBody({
         dev_add_pack(&NAD->packet);
     }
     synchronize_net();
-    struct NetworkAdapterDevice*NAD;
-    list_for_each_entry(NAD,&NetworkAdapter Default.this, list.this)
-        Gateway Default.Init(NAD);   
+   // struct NetworkAdapterDevice*NAD;
+    //list_for_each_entry(NAD,&NetworkAdapter Default.this, list.this)
+      //  Gateway Default.Init(NAD);   
 }
 LibraryBody(NetworkAdapterInterface,
     BootstrapLibraryBody,
