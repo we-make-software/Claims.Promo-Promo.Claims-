@@ -14,7 +14,8 @@
              struct delayed_work worker; 
         }BackgroundTask;
         struct{
-            AtomicHeader(response,request);    
+            AtomicHeader(response,request);  
+            Atomic64Header(expiry,worker);  
         }status;
         union{
             struct InternetProtocolFrame*Server;

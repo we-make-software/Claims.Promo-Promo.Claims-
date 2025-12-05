@@ -36,7 +36,17 @@ Void DefaultDelete(struct InternetProtocolFrame*ipf){
     }
 }
 Void DefaultDelaySet(struct InternetProtocolFrame*ipf){
-
+    if(!AtomicIncrements(&ipf->status.request)&&!Atomic64Value(&ipf->status.response)){
+        spinlock_t*lock=ipf->Client?&ipf->link.Server->lock.this:&ipf->link.Router->lock.Servers;
+        Lock(lock);
+        if(!Atomic64Value(&ipf->status.worker)!=Atomic64Value(&ipf->status.expiry)){
+          // if(Atomic64Value(&ipf->status.expiry)==0)
+            //    InternetProtocolFrameExpiry(5);
+            ScheduleDelayedWorkInternetProtocolFrameworker(ipf,(Atomic64Value(&ipf->status.expiry)>Now?(Atomic64Value(&ipf->status.expiry)-Now):0)/1000000ULL);
+            Atomic64Set(&ipf->status.worker,&ipf->status.expiry);
+        }
+        Unlock(lock);
+    }
 }
 DelayedBackgroundTask(InternetProtocolFrame,worker){
     DefaultAutoChoiceExit(this);
@@ -48,6 +58,7 @@ Void DefaultInit(struct InternetProtocolFrame*ipf){
     ListInit(&ipf->list.this,&ipf->list.Clients);
     LockInit(&ipf->lock.this);
     AtomicInit(&ipf->status.request,&ipf->status.response);
+    Atomic64Init(&ipf->status.expiry,&ipf->status.worker);
     InitDelayedWorkInternetProtocolFrameworker(ipf);
 }
 RX(u8*nextHeader,struct InternetProtocolFrame*ipf,struct NetworkAdapterInterfaceReceiver*nair){
@@ -63,9 +74,9 @@ RX(u8*nextHeader,struct InternetProtocolFrame*ipf,struct NetworkAdapterInterface
     }
     //here wee need to check if wee still got time
     RXTestTime;
-    //handle in version specific interface
     AtomicDecrements(&ipf->status.request);
-    AtomicDecrements(&ipf->link.Router->status.request);
-
+    AtomicDecrements(&ipf->link.Server->status.request);
+    DefaultDelaySet(ipf);
+    DefaultDelaySet(ipf->link.Server);
 }
 LibraryBody(InternetProtocolInterface,RXLibraryBody,{DefaultDelete,DefaultExit,DefaultInit})
