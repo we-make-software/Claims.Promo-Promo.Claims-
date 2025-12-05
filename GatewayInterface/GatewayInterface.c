@@ -39,7 +39,7 @@ MemoryCacheBody(GatewayDevice,{
     this->Default.RXSpeed=true;
     this->Default.TXSpeed=true;
 }
-Void DefualtDelaySet(struct GatewayDevice*gd){
+Void DefaultDelaySet(struct GatewayDevice*gd){
     if(!ApplicationProgramming Default.Status)return;
     if(!Atomic64Value(&gd->status.response)&&!Atomic64Value(&gd->status.request)){
         Lock(&gd->lock.this);
@@ -55,7 +55,7 @@ Void DefualtDelaySet(struct GatewayDevice*gd){
 Void DefaultCancel(struct GatewayDevice*gd,struct sk_buff*skb){
     AtomicDecrements(&gd->status.response);
     kfree_skb(skb);
-    DefualtDelaySet(gd);
+    DefaultDelaySet(gd);
 }
 
 Void DefaultSend(struct GatewayDevice* gd, struct sk_buff* skb) {
@@ -65,7 +65,7 @@ Void DefaultSend(struct GatewayDevice* gd, struct sk_buff* skb) {
         gd->Default.TXSpeed=(delta_ns<125000000ULL);
     Unlock(&gd->lock.this);
     AtomicDecrements(&gd->status.response);
-    DefualtDelaySet(gd);
+    DefaultDelaySet(gd);
 }
 
 
@@ -121,7 +121,7 @@ Void DoRX(struct GatewayDevice*gd,struct NetworkAdapterInterfaceReceiver*nair){
        gd->Default.RXSpeed=(Atomic64Value(&nair->start)-Now<125000000ULL);
     Unlock(&gd->lock.this);
     AtomicDecrements(&gd->status.request);
-    DefualtDelaySet(gd);
+    DefaultDelaySet(gd);
 }
 static bool DefaultTXSpeed(struct GatewayDevice*gd) {
     bool value;

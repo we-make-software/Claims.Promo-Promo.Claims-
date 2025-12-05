@@ -10,6 +10,9 @@
         struct{
             spinlock_t this;
         }lock;
+        struct{           
+             struct delayed_work worker; 
+        }BackgroundTask;
         struct{
             AtomicHeader(response,request);    
         }status;
@@ -18,7 +21,6 @@
             struct GatewayDevice*Router;
         }link;
     };
-
     LibraryHeader(InternetProtocolInterface){
         RXLibraryHeader(u8*,struct InternetProtocolFrame*,struct NetworkAdapterInterfaceReceiver*);
         struct{
